@@ -13,7 +13,7 @@ import { Observable, Subscription } from 'rxjs';
 import { User } from './user.model';
 import { AngularFirestore } from '@angular/fire/firestore';
 import { AppState } from '../app.reducer';
-import { SetUserAction } from './auth.action';
+import { SetUserAction, UnsetUserAction } from './auth.action';
 
 @Injectable({
   providedIn: 'root'
@@ -21,6 +21,7 @@ import { SetUserAction } from './auth.action';
 export class AuthService {
 
   private userSubscription: Subscription = new Subscription();
+  private usuario: User;
 
   constructor(
     private aFAuth: AngularFireAuth,
@@ -36,8 +37,10 @@ export class AuthService {
           .subscribe( (usuarioObj: any) =>  {
             const newUser = new User( usuarioObj );
             this.store.dispatch( new SetUserAction( newUser ) );
+            this.usuario = newUser;
           });
       } else {
+        this.usuario = null;
         this.userSubscription.unsubscribe();
       }
     });
@@ -92,6 +95,8 @@ export class AuthService {
   logout() {
     this.router.navigate(['/login']);
     this.aFAuth.auth.signOut();
+
+    this.store.dispatch( new UnsetUserAction());
   }
 
   isAuth(): Observable<boolean> {
@@ -104,5 +109,9 @@ export class AuthService {
           return fbUser != null;
         } )
       );
+  }
+
+  getUsuario() {
+    return {...this.usuario};
   }
 }
